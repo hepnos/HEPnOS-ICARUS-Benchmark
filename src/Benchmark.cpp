@@ -163,7 +163,6 @@ static std::pair<double,double> parse_wait_range(const std::string& s) {
 
 static void run_benchmark() {
 
-    double t_start, t_end;
     hepnos::DataStore datastore;
     try {
         spdlog::trace("Connecting to HEPnOS using file {}", g_connection_file);
@@ -187,20 +186,39 @@ static void run_benchmark() {
         }
         MPI_Bcast(&run_descriptor, sizeof(run_descriptor), MPI_BYTE, 0, MPI_COMM_WORLD);
         auto run = hepnos::Run::fromDescriptor(datastore, run_descriptor, false);
+        auto subrun = run.createSubRun(g_rank);
+
+        // create dummy products
+        std::vector<dummy_product> products;
+        products.resize(g_product_sizes.size());
+        for(size_t i = 0; i < products.size(); i++) {
+            products[i].data.resize(g_product_sizes[i]);
+            for(size_t j = 0; j < g_product_sizes[i]; j++)
+                products[j].data[j] = j % 256;
+        }
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        t_start = MPI_Wtime();
-        // TODO
-        t_end = MPI_Wtime();
+        hepnos::EventNumber evn = 0;
+        for(const auto& product : products) {
+            double t1 = MPI_Wtime();
+            auto event = subrun.createEvent(evn);
+            double t2 = MPI_Wtime();
+            event.store(g_product_label, product);
+            double t3 = MPI_Wtime();
+            spdlog::info("Storing product of size {}, event created in {} sec, product stored in {} sec",
+                         product.data.size(), t2-t1, t3-t2);
+            evn += 1;
+        }
 
         //if(!g_disable_stats)
         //    spdlog::info("Statistics: {}", stats);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(g_rank == 0)
-        spdlog::info("Benchmark completed in {} seconds", t_end-t_start);
+    if(g_rank == 0) {
+        datastore.shutdown();
+    }
 }
 
 static std::string check_file_exists(const std::string& filename) {
