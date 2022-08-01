@@ -18,6 +18,7 @@ static std::string               g_connection_file;
 static std::string               g_margo_file;
 static std::string               g_input_dataset;
 static std::string               g_product_label;
+static std::vector<size_t>       g_product_sizes;
 static spdlog::level::level_enum g_logging_level;
 static unsigned                  g_num_threads;
 static std::pair<double,double>  g_wait_range;
@@ -27,6 +28,7 @@ static bool                      g_disable_stats;
 static void parse_arguments(int argc, char** argv);
 static std::pair<double,double> parse_wait_range(const std::string&);
 static std::string check_file_exists(const std::string& filename);
+static std::vector<size_t> parse_product_sizes(const std::string&);
 static void run_benchmark();
 
 int main(int argc, char** argv) {
@@ -78,6 +80,8 @@ static void parse_arguments(int argc, char** argv) {
             "DataSet from which to load the data", true, "", "string");
         TCLAP::ValueArg<std::string> productLabel("l", "label",
             "Label to use when storing products", true, "", "string");
+        TCLAP::ValueArg<std::string> productSizes("s", "product-sizes",
+            "Comma-separated product sizes (e.g. 45,67,123)", true, "", "string");
         // optional arguments
         TCLAP::ValueArg<std::string> margoFile("m", "margo-config",
             "Margo configuration file", false, "", "string");
@@ -99,6 +103,7 @@ static void parse_arguments(int argc, char** argv) {
         cmd.add(clientFile);
         cmd.add(dataSetName);
         cmd.add(productLabel);
+        cmd.add(productSizes);
         cmd.add(loggingLevel);
         cmd.add(numThreads);
         cmd.add(waitRange);
@@ -111,6 +116,7 @@ static void parse_arguments(int argc, char** argv) {
         g_connection_file = check_file_exists(clientFile.getValue());
         g_input_dataset   = dataSetName.getValue();
         g_product_label   = productLabel.getValue();
+        g_product_sizes   = parse_product_sizes(productSizes.getValue());
         g_logging_level   = spdlog::level::from_str(loggingLevel.getValue());
         g_num_threads     = numThreads.getValue();
         g_wait_range      = parse_wait_range(waitRange.getValue());
@@ -207,4 +213,15 @@ static std::string check_file_exists(const std::string& filename) {
         exit(-1);
     }
     return "";
+}
+
+static std::vector<size_t> parse_product_sizes(const std::string& str) {
+    std::stringstream ss(str);
+    std::vector<size_t> result;
+    for(size_t i; ss >> i;) {
+        result.push_back(i);
+        if(ss.peek() == ',')
+            ss.ignore();
+    }
+    return result;
 }
