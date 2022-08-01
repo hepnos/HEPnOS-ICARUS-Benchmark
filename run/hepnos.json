@@ -1,0 +1,129 @@
+{
+    "margo": {
+        "progress_timeout_ub_msec": 100,
+        "enable_profiling": false,
+        "enable_diagnostics": false,
+        "handle_cache_size": 32,
+        "profile_sparkline_timeslice_msec": 1000,
+        "argobots": {
+            "abt_mem_max_num_stacks": 8,
+            "abt_thread_stacksize": 2097152,
+            "version": "unknown",
+            "pools": [
+                {
+                    "name": "__primary__",
+                    "kind": "fifo_wait",
+                    "access": "mpmc"
+                },
+                {
+                    "name": "__rpc_0__",
+                    "kind": "fifo_wait",
+                    "access": "mpmc"
+                }
+            ],
+            "xstreams": [
+                {
+                    "name": "__primary__",
+                    "cpubind": -1,
+                    "affinity": [],
+                    "scheduler": {
+                        "type": "basic_wait",
+                        "pools": [
+                            "__primary__"
+                        ]
+                    }
+                },
+                {
+                    "name": "__rpc_0__",
+                    "cpubind": -1,
+                    "affinity": [],
+                    "scheduler": {
+                        "type": "basic_wait",
+                        "pools": [
+                            "__rpc_0__"
+                        ]
+                    }
+                }
+            ]
+        },
+        "mercury": {
+            "address": "ofi+tcp",
+            "listening": true,
+            "ip_subnet": "",
+            "auth_key": "",
+            "auto_sm": false,
+            "max_contexts": 1,
+            "na_no_block": false,
+            "na_no_retry": false,
+            "no_bulk_eager": false,
+            "no_loopback": false,
+            "request_post_incr": 256,
+            "request_post_init": 256,
+            "stats": false,
+            "version": "unknown"
+        },
+        "progress_pool": "__primary__",
+        "rpc_pool": "__primary__"
+    },
+    "abt_io": [],
+    "ssg": [
+        {
+            "name": "hepnos",
+            "pool": "__primary__",
+            "credential": -1,
+            "bootstrap": "mpi",
+            "group_file": "hepnos.ssg",
+            "swim": {
+                "period_length_ms": 0,
+                "suspect_timeout_periods": -1,
+                "subgroup_member_count": -1,
+                "disabled": true
+            }
+        }
+    ],
+    "libraries": {
+        "yokan": "libyokan-bedrock-module.so"
+    },
+    "providers": [
+        {
+            "name": "hepnos_0",
+            "type": "yokan",
+            "pool": "__rpc_0__",
+            "provider_id": 0,
+            "dependencies": {},
+            "config": {
+                "databases": [
+                    {
+                        "name": "hepnos-datasets-0",
+                        "type": "map",
+                        "config": {}
+                    },
+                    {
+                        "name": "hepnos-runs-0",
+                        "type": "set",
+                        "config": {}
+                    },
+                    {
+                        "name": "hepnos-subruns-0",
+                        "type": "set",
+                        "config": {}
+                    },
+                    {
+                        "name": "hepnos-events-0",
+                        "type": "set",
+                        "config": {}
+                    },
+                    {
+                        "name": "hepnos-products-0",
+                        "type": "map",
+                        "config": {}
+                    }
+                ]
+            }
+        }
+    ],
+    "bedrock": {
+        "pool": "__primary__",
+        "provider_id": 0
+    }
+}

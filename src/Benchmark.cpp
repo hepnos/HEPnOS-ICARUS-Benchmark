@@ -194,7 +194,7 @@ static void run_benchmark() {
         for(size_t i = 0; i < products.size(); i++) {
             products[i].data.resize(g_product_sizes[i]);
             for(size_t j = 0; j < g_product_sizes[i]; j++)
-                products[j].data[j] = j % 256;
+                products[i].data[j] = j % 256;
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
