@@ -23,7 +23,6 @@ static spdlog::level::level_enum g_logging_level;
 static unsigned                  g_num_threads;
 static std::pair<double,double>  g_wait_range;
 static std::mt19937              g_mte;
-static bool                      g_disable_stats;
 
 static void parse_arguments(int argc, char** argv);
 static std::pair<double,double> parse_wait_range(const std::string&);
@@ -95,8 +94,6 @@ static void parse_arguments(int argc, char** argv) {
             "Number of threads to run processing work", false, 0, "int");
         TCLAP::ValueArg<std::string> waitRange("r", "wait-range",
             "Waiting time interval in seconds (e.g. 1.34,3.56)", false, "0,0", "x,y");
-        TCLAP::SwitchArg disableStats("", "disable-stats",
-            "Disable statistics collection");
 
         cmd.add(protocol);
         cmd.add(margoFile);
@@ -107,7 +104,6 @@ static void parse_arguments(int argc, char** argv) {
         cmd.add(loggingLevel);
         cmd.add(numThreads);
         cmd.add(waitRange);
-        cmd.add(disableStats);
 
         cmd.parse(argc, argv);
 
@@ -120,7 +116,6 @@ static void parse_arguments(int argc, char** argv) {
         g_logging_level   = spdlog::level::from_str(loggingLevel.getValue());
         g_num_threads     = numThreads.getValue();
         g_wait_range      = parse_wait_range(waitRange.getValue());
-        g_disable_stats   = disableStats.getValue();
 
     } catch(TCLAP::ArgException &e) {
         if(g_rank == 0) {
@@ -201,18 +196,13 @@ static void run_benchmark() {
 
         hepnos::EventNumber evn = 0;
         for(const auto& product : products) {
-            double t1 = MPI_Wtime();
             auto event = subrun.createEvent(evn);
-            double t2 = MPI_Wtime();
-            event.store(g_product_label, product);
-            double t3 = MPI_Wtime();
-            spdlog::info("Storing product of size {}, event created in {} sec, product stored in {} sec",
-                         product.data.size(), t2-t1, t3-t2);
+            hepnos::StoreStatistics stats;
+            event.store(g_product_label, product, &stats);
+            spdlog::info("size={}, storage={}, serialization={}", product.data.size(),
+                         stats.raw_storage_time.max, stats.serialization_time.max);
             evn += 1;
         }
-
-        //if(!g_disable_stats)
-        //    spdlog::info("Statistics: {}", stats);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
