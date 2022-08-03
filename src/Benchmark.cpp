@@ -203,6 +203,24 @@ static void run_benchmark() {
                          stats.raw_storage_time.max, stats.serialization_time.max);
             evn += 1;
         }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        evn = 0;
+
+        std::vector<dummy_product> loaded_products;
+        for(const auto& product : products) {
+            auto event = subrun[evn];
+            dummy_product tmp_product;
+            hepnos::LoadStatistics stats;
+            event.load(g_product_label, tmp_product, &stats);
+            if(tmp_product.data != product.data) {
+                spdlog::error("Loaded product doesn't match stored product!");
+            }
+            spdlog::info("size={}, loading={}, deserialization={}", product.data.size(),
+                         stats.raw_loading_time.max, stats.deserialization_time.max);
+            evn += 1;
+        }
+
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
